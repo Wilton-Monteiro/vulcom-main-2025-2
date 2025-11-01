@@ -7,11 +7,9 @@ const controller = {}     // Objeto vazio
 controller.create = async function(req, res) {
   try {
 
-   // Somente usuários administradores podem acessar este recurso
+    // Somente usuários administradores podem acessar este recurso
     // HTTP 403: Forbidden(
     if(! req?.authUser?.is_admin) return res.status(403).end()
-
-
 
     // Verifica se existe o campo "password" em "req.body".
     // Caso positivo, geramos o hash da senha antes de enviá-la
@@ -35,20 +33,18 @@ controller.create = async function(req, res) {
   }
 }
 
-
 controller.retrieveAll = async function(req, res) {
   try {
+
     // Somente usuários administradores podem acessar este recurso
     // HTTP 403: Forbidden(
     if(! req?.authUser?.is_admin) return res.status(403).end()
-
 
     const result = await prisma.user.findMany(
       // Omite o campo "password" do resultado
       // por questão de segurança
       { omit: { password: true } } 
     )
-
 
     // HTTP 200: OK (implícito)
     res.send(result)
@@ -63,6 +59,7 @@ controller.retrieveAll = async function(req, res) {
 
 controller.retrieveOne = async function(req, res) {
   try {
+
     // Somente usuários administradores ou o próprio usuário
     // autenticado podem acessar este recurso
     // HTTP 403: Forbidden
@@ -70,14 +67,12 @@ controller.retrieveOne = async function(req, res) {
       Number(req?.authUser?.id) === Number(req.params.id))) 
       return res.status(403).end()
 
-
     const result = await prisma.user.findUnique({
       // Omite o campo "password" do resultado
       // por questão de segurança
       omit: { password: true },
       where: { id: Number(req.params.id) }
     })
-
 
     // Encontrou ~> retorna HTTP 200: OK (implícito)
     if(result) res.send(result)
@@ -95,12 +90,9 @@ controller.retrieveOne = async function(req, res) {
 controller.update = async function(req, res) {
   try {
 
-     // Somente usuários administradores podem acessar este recurso
+    // Somente usuários administradores podem acessar este recurso
     // HTTP 403: Forbidden(
     if(! req?.authUser?.is_admin) return res.status(403).end()
-
-
-
 
     // Verifica se existe o campo "password" em "req.body".
     // Caso positivo, geramos o hash da senha antes de enviá-la
@@ -129,15 +121,12 @@ controller.update = async function(req, res) {
   }
 }
 
-
 controller.delete = async function(req, res) {
   try {
 
-     // Somente usuários administradores podem acessar este recurso
+    // Somente usuários administradores podem acessar este recurso
     // HTTP 403: Forbidden(
     if(! req?.authUser?.is_admin) return res.status(403).end()
-
-
 
     await prisma.user.delete({
       where: { id: Number(req.params.id) }
@@ -161,7 +150,6 @@ controller.delete = async function(req, res) {
   }
 }
 
-
 controller.login = async function(req, res) {
   try {
 
@@ -176,6 +164,15 @@ controller.login = async function(req, res) {
         }
       })
 
+      // Se o usuário não for encontrado, retorna
+      // HTTP 401: Unauthorized
+      if(! user) return res.status(401).end()
+
+      // REMOVENDO VULNERABILIDADE DE AUTENTICAÇÃO FIXA
+      // if(req.body?.username === 'admin' && req.body?.password === 'admin123') passwordIsValid = true
+      // else passwordIsValid = user.password === req.body?.password
+      // passwordIsValid = user.password === req.body?.password
+      
       // Chamando bcrypt.compare() para verificar se o hash da senha
       // enviada coincide com o hash da senha armazenada no BD
       const passwordIsValid = await bcrypt.compare(req.body?.password, user.password)
@@ -195,7 +192,6 @@ controller.login = async function(req, res) {
         { expiresIn: '24h' }        // Prazo de validade do token
       )
 
-
       // Formamos o cookie para enviar ao front-end
       res.cookie(process.env.AUTH_COOKIE_NAME, token, {
         httpOnly: true, // O cookie ficará inacessível para o JS no front-end
@@ -214,10 +210,9 @@ controller.login = async function(req, res) {
         maxAge: 24 * 60 * 60 * 100  // 24h
       })
 
-
       // Retorna o token e o usuário autenticado com
       // HTTP 200: OK (implícito)
-      res.send({token, user})
+      res.send({user})
 
   }
   catch(error) {
@@ -228,13 +223,10 @@ controller.login = async function(req, res) {
   }
 }
 
-
-
 controller.me = function(req, res) {
-  // Retorna APENAS o usuário autenticado com
-      // HTTP 200: OK (implícito)
-      res.send({user})
-
+  // Retorna as informações do usuário autenticado
+  // HTTP 200: OK (implícito)
+  res.send(req?.authUser)
 }
 
 controller.logout = function(req, res) {
@@ -243,6 +235,5 @@ controller.logout = function(req, res) {
   // HTTP 204: No Content
   res.status(204).end()
 }
-
 
 export default controller
