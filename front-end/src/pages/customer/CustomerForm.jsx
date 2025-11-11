@@ -15,6 +15,7 @@ import useWaiting from '../../ui/useWaiting'
 import { useNavigate, useParams } from 'react-router-dom'
 import myfetch from '../../lib/myfetch'
 import Customer from '../../models/Customer.js'
+import Car from '../../models/Car.js'
 import { ZodError } from 'zod'
 
 
