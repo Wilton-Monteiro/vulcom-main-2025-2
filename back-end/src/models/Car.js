@@ -26,8 +26,7 @@ const Car = z.object({
       required_error: 'O modelo é obrigatório.'
     })
     .min(1, { message: 'O modelo deve ter no mínimo 1 caractere.' })
-    .max(25, { message: 'O modelo deve ter no máximo 25 caracteres.' })
-    .regex(/[A-Za-zÀ-ÿ]/, { message: 'O modelo deve conter pelo menos uma letra.' }),
+    .max(25, { message: 'O modelo deve ter no máximo 25 caracteres.' }),
 
   color: z
     .enum(allowedColors, {

@@ -1,4 +1,7 @@
 import Checkbox from '@mui/material/Checkbox';
+// ...existing code...
+import Car from '../../models/Car.js'
+import { ZodError } from 'zod'
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -95,8 +98,14 @@ export default function CarForm() {
     event.preventDefault(); // Evita que a página seja recarregada
     showWaiting(true); // Exibe a tela de espera
     try {
-
+      // Conversão de tipos
       if(car.selling_price === '') car.selling_price = null
+      else car.selling_price = Number(car.selling_price)
+      car.year_manufacture = Number(car.year_manufacture)
+      car.customer_id = Number(car.customer_id)
+
+      // Validação Zod no front-end
+      Car.parse(car)
 
       // Se houver parâmetro na rota, significa que estamos modificando
       // um cliente já existente. A requisição será enviada ao back-end
@@ -113,7 +122,24 @@ export default function CarForm() {
       })
     } catch (error) {
       console.error(error)
-      notify(error.message, 'error')
+      // Erro de validação do Zod no front-end
+      if (error instanceof ZodError) {
+        const errorMessages = {};
+        for (let i of error.issues) errorMessages[i.path[0]] = i.message;
+        setState({ ...state, inputErrors: errorMessages });
+        notify('Há campos com valores inválidos. Verifique.', 'error');
+      }
+      // Erro de validação do backend (Zod)
+      else if (error.response && error.response.status === 422 && Array.isArray(error.response.data)) {
+        const errorMessages = {};
+        for (let i of error.response.data) {
+          if (i.path && i.path.length > 0) errorMessages[i.path[0]] = i.message;
+        }
+        setState({ ...state, inputErrors: errorMessages });
+        notify('Há campos com valores inválidos. Verifique.', 'error');
+      } else {
+        notify(error.message, 'error');
+      }
     } finally {
       // Desliga a tela de espera, seja em caso de sucesso, seja em caso de erro
       showWaiting(false)
