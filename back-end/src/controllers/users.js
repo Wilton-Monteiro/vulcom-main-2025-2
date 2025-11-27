@@ -67,6 +67,13 @@ controller.retrieveOne = async function(req, res) {
       Number(req?.authUser?.id) === Number(req.params.id))) 
       return res.status(403).end()
 
+      /*
+    Vulnerabilidade: API1:2023 - Falha de autenticação a nível de objeto
+    Esta vulnerabilidade foi evitada conferindo se quem está a pedir os dados é o 
+    administrador ou o próprio dono da conta. Assim, um utilizador não consegue ver os 
+    dados de outro só trocando o ID na URL.
+    */
+
     const result = await prisma.user.findUnique({
       // Omite o campo "password" do resultado
       // por questão de segurança
@@ -127,6 +134,13 @@ controller.delete = async function(req, res) {
     // Somente usuários administradores podem acessar este recurso
     // HTTP 403: Forbidden(
     if(! req?.authUser?.is_admin) return res.status(403).end()
+
+     /*
+    Vulnerabilidade: API5:2023 - Falha de autenticação a nível de função
+    Esta vulnerabilidade foi evitada colocando essa verificação do "is_admin". 
+    Desse jeito, a gente garante que utilizadores comuns não consigam aceder a 
+    funções administrativas como apagar contas.
+    */
 
     await prisma.user.delete({
       where: { id: Number(req.params.id) }

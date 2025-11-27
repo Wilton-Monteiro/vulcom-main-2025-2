@@ -29,6 +29,12 @@ const limiter = rateLimit({
  limit: 20               // Máximo de 20 requisições
 })
 
+/*
+Vulnerabilidade: API4:2023 - Consumo irrestrito de recursos
+Esta vulnerabilidade foi evitada aqui usando o "rate limiter", que limita o 
+número de requisições que a gente pode fazer por minuto, impedindo que alguém sobrecarregue o servidor.
+*/
+
 
 app.use(limiter)
 
